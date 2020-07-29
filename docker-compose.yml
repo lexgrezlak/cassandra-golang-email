@@ -1,0 +1,15 @@
+version: "3"
+services:
+  cassandra:
+    image: bitnami/cassandra:latest
+    container_name: cassandra-request-golang
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/cassandra:/var/lib/cassandra/data
+    networks:
+      - cassandra
+networks:
+  cassandra:
+    driver: bridge
+
