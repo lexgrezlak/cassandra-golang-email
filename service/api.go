@@ -1,11 +1,20 @@
 package service
 
-type api struct {
+import (
+	"github.com/gocql/gocql"
+)
 
+type api struct {
+	session *gocql.Session
 }
 
 type MessageDatastore interface {
-	CreateMessage() error
-	DeleteMessage() error
+	CreateMessage(i Message) error
+	DeleteMessage(magicNumber int) error
 	GetAllMessagesByEmail(email string) ([]*Message, error)
+}
+
+
+func NewAPI(session *gocql.Session) *api {
+	return &api{session: session}
 }

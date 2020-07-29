@@ -1,8 +1,11 @@
 package handler
 
-import "net/http"
+import (
+	"net/http"
+	"request-golang/service"
+)
 
-func DeleteMessage() http.HandlerFunc {
+func DeleteMessage(datastore service.MessageDatastore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 	}
