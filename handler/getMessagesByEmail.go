@@ -1,9 +1,15 @@
 package handler
 
-import "net/http"
+import (
+	"fmt"
+	"github.com/gorilla/mux"
+	"net/http"
+)
 
 func GetMessagesByEmail() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		email := vars["email"]
 
 	}
 }
