@@ -4,9 +4,10 @@ services:
     image: bitnami/cassandra:latest
     container_name: cassandra-request-golang
     ports:
-      - "5432:5432"
+      - "9042:9042"
     volumes:
       - ./data/cassandra:/var/lib/cassandra/data
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     networks:
       - cassandra
 networks:
