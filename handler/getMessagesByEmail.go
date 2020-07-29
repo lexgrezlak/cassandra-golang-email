@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
 )
