@@ -1,6 +1,9 @@
 package service
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/gocql/gocql"
+)
 
 type Message struct {
 	Email string `json:"email"`
@@ -20,6 +23,10 @@ func (api *api) DeleteMessage(magicNumber int)  error {
 }
 
 func (api *api) CreateMessage(i Message) error {
-	fmt.Println("creating message")
+	if err := api.session.Query(
+		`INSERT INTO message (id, email, title, content, magic_number) VALUES (?, ?, ?, ?, ?)`,
+		gocql.TimeUUID(),i.Email, i.Title, i.Content, i.MagicNumber).Exec(); err != nil {
+		return fmt.Errorf("failed to insert a message: %w", err)
+	}
 	return nil
 }

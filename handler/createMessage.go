@@ -16,10 +16,10 @@ func CreateMessage(datastore service.MessageDatastore) http.HandlerFunc {
 			panic(err) // TODO
 		}
 		if err = json.Unmarshal(body, &i); err != nil {
-			panic(err) // TODO
+			fmt.Printf("%v", err)
 		}
 		if err = datastore.CreateMessage(i); err != nil {
-			fmt.Errorf("failed to create message: %v", err)
+			fmt.Printf("failed to create message: %v", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}

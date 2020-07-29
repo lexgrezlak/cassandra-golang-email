@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	cluster := gocql.NewCluster("127.0.0.1:9042")
+	cluster := gocql.NewCluster("127.0.0.1")
 	cluster.Keyspace = "public"
 	cluster.Consistency = gocql.Quorum
 	cluster.Authenticator = gocql.PasswordAuthenticator{
