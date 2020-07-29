@@ -13,8 +13,22 @@ type Message struct {
 }
 
 func (api *api) GetMessagesByEmail(email string) ([]*Message, error) {
-	fmt.Println("getting all messages")
-	messages := []*Message{{Email: "hiell", Title: "title", Content: "asddas", MagicNumber: 123}}
+	var messages []*Message
+	iterable := api.session.Query(
+		`SELECT email, title, content, magic_number FROM message WHERE email=?`,
+		email).Consistency(gocql.One).Iter()
+
+	m := map[string]interface{}{}
+	for iterable.MapScan(m) {
+		message := &Message{
+			Email:       m["email"].(string),
+			Title:       m["title"].(string),
+			Content:     m["content"].(string),
+			MagicNumber: m["magic_number"].(int),
+		}
+		messages = append(messages, message)
+		m = map[string]interface{}{}
+	}
 	return messages, nil
 }
 func (api *api) DeleteMessage(magicNumber int)  error {

@@ -10,3 +10,5 @@ CREATE TABLE message (
     content      text,
     magic_number int,
 );
+
+CREATE INDEX ON message(email);
