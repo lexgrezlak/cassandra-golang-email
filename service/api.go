@@ -11,7 +11,7 @@ type api struct {
 type MessageDatastore interface {
 	CreateMessage(i Message) error
 	DeleteMessage(magicNumber int) error
-	GetAllMessagesByEmail(email string) ([]*Message, error)
+	GetMessagesByEmail(email string) ([]*Message, error)
 }
 
 

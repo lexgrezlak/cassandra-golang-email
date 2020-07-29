@@ -9,9 +9,10 @@ type Message struct {
 	MagicNumber int `json:"magic_number"`
 }
 
-func (api *api) GetAllMessagesByEmail(email string) ([]*Message, error) {
+func (api *api) GetMessagesByEmail(email string) ([]*Message, error) {
 	fmt.Println("getting all messages")
-	return nil, nil
+	messages := []*Message{{Email: "hiell", Title: "title", Content: "asddas", MagicNumber: 123}}
+	return messages, nil
 }
 func (api *api) DeleteMessage(magicNumber int)  error {
 	fmt.Printf("deleting messages with magic number %v", magicNumber)
