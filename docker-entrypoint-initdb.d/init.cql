@@ -1,11 +1,12 @@
-CREATE KEYSPACE IF NOT EXISTS "public"
-WITH replication = {'class':'SimpleStrategy','replication_factor':'1'};
+CREATE KEYSPACE public
+    WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
 
-CREATE TABLE public.message
-(
-    id           SERIAL PRIMARY KEY,
-    email        VARCHAR(50) NOT NULL UNIQUE,
-    title        VARCHAR(50) NOT NULL,
-    content      TEXT        NOT NULL,
-    magic_number INT         NOT NULL
+USE public;
+
+CREATE TABLE message (
+    id UUID PRIMARY KEY,
+    email        text,
+    title        text,
+    content      text,
+    magic_number int,
 );
