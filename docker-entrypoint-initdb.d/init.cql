@@ -12,7 +12,7 @@ CREATE TABLE message (
     created_at   timestamp,
     PRIMARY KEY (id, created_at)
 ) WITH CLUSTERING ORDER BY (created_at DESC) AND
-    default_time_to_live = 60 * 5;
+    default_time_to_live = 300; -- 5 minutes
 
 CREATE INDEX ON message(email);
 CREATE INDEX ON message(magic_number);
