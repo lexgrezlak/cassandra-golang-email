@@ -12,3 +12,4 @@ CREATE TABLE message (
 );
 
 CREATE INDEX ON message(email);
+CREATE INDEX ON message(magic_number);

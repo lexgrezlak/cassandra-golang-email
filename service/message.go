@@ -5,6 +5,14 @@ import (
 	"github.com/gocql/gocql"
 )
 
+	const (
+		ID = "id"
+		EMAIL = "email"
+		TITLE = "title"
+		CONTENT = "content"
+		MAGIC_NUMBER = "magic_number"
+	)
+
 type Message struct {
 	Email string `json:"email"`
 	Title string `json:"title"`
@@ -21,18 +29,34 @@ func (api *api) GetMessagesByEmail(email string) ([]*Message, error) {
 	m := map[string]interface{}{}
 	for iterable.MapScan(m) {
 		message := &Message{
-			Email:       m["email"].(string),
-			Title:       m["title"].(string),
-			Content:     m["content"].(string),
-			MagicNumber: m["magic_number"].(int),
+			Email:       m[EMAIL].(string),
+			Title:       m[TITLE].(string),
+			Content:     m[CONTENT].(string),
+			MagicNumber: m[MAGIC_NUMBER].(int),
 		}
 		messages = append(messages, message)
 		m = map[string]interface{}{}
 	}
 	return messages, nil
 }
-func (api *api) DeleteMessage(magicNumber int)  error {
-	fmt.Printf("deleting messages with magic number %v", magicNumber)
+
+func (api *api) DeleteMessage(magicNumber int) error {
+	// Pull the ids of messages with the specified magicNumber
+	// to delete them later.
+	iterable := api.session.Query(
+		`SELECT id FROM message WHERE magic_number=?`, magicNumber).Iter()
+	var ids []gocql.UUID
+	m := map[string]interface{}{}
+	for iterable.MapScan(m) {
+		id := m[ID].(gocql.UUID)
+		ids = append(ids, id)
+		m = map[string]interface{}{}
+	}
+
+	// Delete the messages with the specified magicNumber.
+	if err := api.session.Query(`DELETE FROM message WHERE id IN ?`, ids).Exec(); err != nil {
+		return fmt.Errorf("failed to delete messages: %w", err)
+	}
 	return nil
 }
 
