@@ -4,12 +4,15 @@ CREATE KEYSPACE public
 USE public;
 
 CREATE TABLE message (
-    id UUID PRIMARY KEY,
+    id           UUID,
     email        text,
     title        text,
     content      text,
     magic_number int,
-);
+    created_at   timestamp,
+    PRIMARY KEY (id, created_at)
+) WITH CLUSTERING ORDER BY (created_at DESC) AND
+    default_time_to_live = 60 * 5;
 
 CREATE INDEX ON message(email);
 CREATE INDEX ON message(magic_number);
