@@ -11,9 +11,8 @@ type api struct {
 type MessageDatastore interface {
 	CreateMessage(i Message) error
 	DeleteMessage(magicNumber int) error
-	GetMessagesByEmail(email string) ([]*Message, error)
+	GetMessagesByEmail(email string, limit int, cursor string) ([]*Message, string, error)
 }
-
 
 func NewAPI(session *gocql.Session) *api {
 	return &api{session: session}

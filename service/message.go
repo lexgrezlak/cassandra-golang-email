@@ -12,43 +12,65 @@ const (
 	TITLE        = "title"
 	CONTENT      = "content"
 	MAGIC_NUMBER = "magic_number"
+	CREATED_AT = "created_at"
 )
 
 type Message struct {
+	Id          gocql.UUID `json:"id"`
 	Email       string `json:"email"`
 	Title       string `json:"title"`
 	Content     string `json:"content"`
 	MagicNumber int    `json:"magic_number"`
+	// I think camelCase is better for json,
+	// the magic_number is gonna be the exception in this program
+	// just to follow the specification
+	CreatedAt   time.Time `json:"createdAt"`
 }
 
-func (api *api) GetMessagesByEmail(email string, limit int, cursor string) ([]*Message, error) {
+func (api *api) GetMessagesByEmail(email string, limit int, encodedCursor string) ([]*Message, string, error) {
 	var messages []*Message
-	iterable := api.session.Query(
-		`SELECT email, title, content, magic_number FROM message WHERE email=?`,
-		email).Consistency(gocql.One).Iter()
+	var state []byte
+	// Defaults to nil in case of an empty cursor.
+	state = nil
+	if encodedCursor != "" {
+		if cursor, err := decodeCursor(encodedCursor); err == nil {
+			state = cursor
+		}
+	}
+
+	q := api.session.Query(
+		`SELECT id, email, title, content, magic_number, created_at FROM message WHERE email=?`,
+		email).PageState(state)
+	if limit > 0 {
+		q.PageSize(limit)
+	}
+	iter := q.Iter()
+	endCursor := encodeCursor(iter.PageState())
 
 	m := map[string]interface{}{}
-	for iterable.MapScan(m) {
+	for iter.MapScan(m) {
 		message := &Message{
+			Id: 		 m[ID].(gocql.UUID),
 			Email:       m[EMAIL].(string),
 			Title:       m[TITLE].(string),
 			Content:     m[CONTENT].(string),
 			MagicNumber: m[MAGIC_NUMBER].(int),
+			CreatedAt:   m[CREATED_AT].(time.Time),
 		}
 		messages = append(messages, message)
 		m = map[string]interface{}{}
 	}
-	return messages, nil
+	return messages, endCursor, nil
 }
 
 func (api *api) DeleteMessage(magicNumber int) error {
 	// Pull the ids of messages with the specified magicNumber
 	// to delete them later.
-	iterable := api.session.Query(
+	iter := api.session.Query(
 		`SELECT id FROM message WHERE magic_number=?`, magicNumber).Iter()
 	var ids []gocql.UUID
 	m := map[string]interface{}{}
-	for iterable.MapScan(m) {
+	for iter.MapScan(m) {
 		id := m[ID].(gocql.UUID)
 		ids = append(ids, id)
 		m = map[string]interface{}{}

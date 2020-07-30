@@ -16,6 +16,11 @@ func main() {
 	cluster.Keyspace = "public"
 	cluster.Consistency = gocql.Quorum
 	cluster.Authenticator = gocql.PasswordAuthenticator{
+		// I would've normally used environment variables but I'm supposed
+		// to push the docker image into docker hub and ensure it's working
+		// so I guess I'm not gonna make you spend time on creating .env file
+		// Overall you shouldn't ever store such data in your code,
+		// even for testing or development.
 		Username: "cassandra",
 		Password: "cassandra",
 	}
