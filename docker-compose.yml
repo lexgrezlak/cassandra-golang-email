@@ -23,7 +23,7 @@ services:
       - 9142
   web:
     container_name: web-request-golang
-    image: requestgolang:1.0
+    image: alex123189/requestgolang:1.0
     ports:
       - "8080:8080"
     restart: always
