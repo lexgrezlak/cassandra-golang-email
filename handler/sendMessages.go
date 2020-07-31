@@ -26,7 +26,7 @@ func SendMessage(datastore service.MessageDatastore) http.HandlerFunc {
 			w.Write([]byte(err.Error()))
 		}
 
-		if err = datastore.SendMessage(i.MagicNumber); err != nil {
+		if err = datastore.SendMessages(i.MagicNumber); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 		}
@@ -34,4 +34,3 @@ func SendMessage(datastore service.MessageDatastore) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 	}
 }
-

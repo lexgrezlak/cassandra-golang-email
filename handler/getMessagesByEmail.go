@@ -10,14 +10,14 @@ import (
 )
 
 const (
-	EMAIL = "email"
-	LIMIT = "limit"
+	EMAIL  = "email"
+	LIMIT  = "limit"
 	CURSOR = "cursor"
 )
 
 type getMessagesByEmailResponse struct {
-	Messages []*service.Message `json:"messages"`
-	EndCursor string `json:"endCursor"`
+	Messages  []*service.Message `json:"messages"`
+	EndCursor string             `json:"endCursor"`
 }
 
 func GetMessagesByEmail(datastore service.MessageDatastore) http.HandlerFunc {
@@ -52,4 +52,3 @@ func GetMessagesByEmail(datastore service.MessageDatastore) http.HandlerFunc {
 		w.Write(payload)
 	}
 }
-
