@@ -13,7 +13,7 @@ type SendMessagesInput struct {
 func SendMessages(datastore service.MessageDatastore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var i SendMessagesInput
-		statusCode, err := util.Unmarshal(w, r, i)
+		statusCode, err := util.Unmarshal(w, r, &i)
 		if err != nil {
 			w.WriteHeader(statusCode)
 			w.Write([]byte(err.Error()))
