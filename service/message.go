@@ -72,7 +72,7 @@ func (api *api) GetMessagesByEmail(email string, limit int, encodedCursor string
 
 
 
-func (api *api) SendMessage(magicNumber int) error {
+func (api *api) SendMessages(magicNumber int) error {
 	// Pull the ids of messages with the specified magicNumber
 	// to delete them later.
 	iter := api.session.Query(
