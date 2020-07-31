@@ -3,14 +3,37 @@ services:
   cassandra:
     image: bitnami/cassandra:latest
     container_name: cassandra-request-golang
-    ports:
-      - "9042:9042"
     volumes:
       - ./data/cassandra:/var/lib/cassandra/data
       - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     networks:
+      - app
+    ports:
+      - 9042:9042
+    expose:
+      # Intra-node communication
+      - 7000
+      # TLS intra-node communication
+      - 7001
+      # JMX
+      - 7199
+      # CQL
+      - 9042
+      # CQL SSL
+      - 9142
+  web:
+    container_name: web-request-golang
+    image: requestgolang:1.0
+    ports:
+      - "8080:8080"
+    restart: always
+    networks:
+      - app
+    depends_on:
       - cassandra
+    links:
+      - cassandra:cassandra
 networks:
-  cassandra:
+  app:
     driver: bridge
 
