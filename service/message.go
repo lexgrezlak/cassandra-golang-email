@@ -17,7 +17,7 @@ const (
 )
 
 type sendEmailInput struct {
-	Email string
+	Email   string
 	Subject string
 	Content string
 }
@@ -28,7 +28,7 @@ type Message struct {
 	Title       string     `json:"title"`
 	Content     string     `json:"content"`
 	MagicNumber int        `json:"magic_number"`
-	// I think camelCase is better for json,
+	// We assume camelCase is better for json,
 	// the magic_number is gonna be the exception in this program
 	// just to follow the specification
 	CreatedAt time.Time `json:"createdAt"`
@@ -44,7 +44,6 @@ func (api *api) GetMessagesByEmail(email string, limit int, encodedCursor string
 			state = cursor
 		}
 	}
-
 	q := api.session.Query(
 		`SELECT id, email, title, content, magic_number, created_at FROM message WHERE email=?`,
 		email).PageState(state)
@@ -70,20 +69,14 @@ func (api *api) GetMessagesByEmail(email string, limit int, encodedCursor string
 	return messages, endCursor, nil
 }
 
-
-
 func (api *api) SendMessages(magicNumber int) error {
 	// Pull the ids of messages with the specified magicNumber
 	// to delete them later.
 	iter := api.session.Query(
 		`SELECT id, title, content, email FROM message WHERE magic_number=?`, magicNumber).Iter()
 
-	// We're allocating the length of array so that there's no
-	// "indexing may cause panic because of nil slice"
-	// when using the index of `sendEmailInputs` to access `ids` in the for loop below
-	ids := make([]*gocql.UUID, iter.NumRows())
-	sendEmailInputs := make([]sendEmailInput, iter.NumRows())
-
+	ids := make([]*gocql.UUID, 0)
+	sendEmailInputs := make([]*sendEmailInput, 0)
 	m := map[string]interface{}{}
 
 	for iter.MapScan(m) {
@@ -93,11 +86,12 @@ func (api *api) SendMessages(magicNumber int) error {
 
 		// Get the inputs for sending emails
 		input := sendEmailInput{
-			Email:       m[EMAIL].(string),
-			Subject:       m[TITLE].(string),
-			Content:     m[CONTENT].(string),
+			Email:   m[EMAIL].(string),
+			Subject: m[TITLE].(string),
+			Content: m[CONTENT].(string),
 		}
-		sendEmailInputs = append(sendEmailInputs, input)
+		sendEmailInputs = append(sendEmailInputs, &input)
+		fmt.Printf("INPUT %v INPUT", sendEmailInputs)
 
 		m = map[string]interface{}{}
 	}
@@ -107,7 +101,7 @@ func (api *api) SendMessages(magicNumber int) error {
 		err := sendEmail(input)
 		if err != nil {
 			return fmt.Errorf("failed to send an email: %v", err)
-		// If email has been successfully sent, delete the message
+			// If the email has been successfully sent, delete the message
 		} else {
 			err := api.deleteMessage(ids[i])
 			if err != nil {
@@ -135,7 +129,7 @@ func (api *api) deleteMessage(id *gocql.UUID) error {
 	return nil
 }
 
-func sendEmail(i sendEmailInput) error {
+func sendEmail(i *sendEmailInput) error {
 	to := []string{i.Email}
 	msg := []byte("To: " + i.Email + "\r\n" +
 		"Subject: " + i.Subject + "\r\n" +
@@ -148,4 +142,3 @@ func sendEmail(i sendEmailInput) error {
 	}
 	return nil
 }
-
