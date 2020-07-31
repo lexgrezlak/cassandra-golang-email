@@ -1,19 +1,21 @@
 package handler
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/google/go-cmp/cmp"
+	"log"
 	"net/http"
 	"net/http/httptest"
-	"request-golang/service"
 	"testing"
 )
 
-func TestGetMessagesByEmail(t *testing.T) {
+func TestSendMessages(t *testing.T) {
 	testCases := []struct {
-		name               string
-		want               int
-		getMessagesByEmail func(email string, limit int, cursor string) ([]*service.Message, string, error)
+		name         string
+		want         int
+		sendMessages func(magicNumber int) error
 	}{
 		{
 			"valid input",
@@ -23,20 +25,27 @@ func TestGetMessagesByEmail(t *testing.T) {
 		{
 			"valid input and api returns an error",
 			http.StatusInternalServerError,
-			func(email string, limit int, cursor string) ([]*service.Message, string, error) {
-				return nil, "", fmt.Errorf("failed to get messages")
+			func(magicNumber int) error {
+				return fmt.Errorf("failed to send messages")
 			}},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			api := &mockApi{}
-			if tc.getMessagesByEmail != nil {
-				api.MockGetMessagesByEmail = tc.getMessagesByEmail
+			if tc.sendMessages != nil {
+				api.MockSendMessages = tc.sendMessages
 			}
 			res := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", "/api/messages/john@doe.com", nil)
-			h := GetMessagesByEmail(api)
+
+			i := SendMessagesInput{MagicNumber: 390}
+			buf := new(bytes.Buffer)
+			if err := json.NewEncoder(buf).Encode(i); err != nil {
+				log.Fatal(err)
+			}
+			req := httptest.NewRequest("POST", "/api/send", buf)
+
+			h := SendMessages(api)
 			h(res, req)
 			got := res.Code
 			if diff := cmp.Diff(tc.want, got); diff != "" {
