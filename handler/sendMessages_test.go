@@ -49,7 +49,7 @@ func TestSendMessages(t *testing.T) {
 			h(res, req)
 			got := res.Code
 			if diff := cmp.Diff(tc.want, got); diff != "" {
-				t.Errorf("mismatch (-want, +got): \n%s", diff)
+				t.Errorf("mismatch (-wantCode, +got): \n%s", diff)
 			}
 		})
 	}
