@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"request-golang/service"
@@ -10,18 +9,21 @@ import (
 
 func CreateMessage(datastore service.MessageDatastore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var i service.Message
-		body, err := ioutil.ReadAll(r.Body)
+		bodyBytes, err := ioutil.ReadAll(r.Body)
+		defer r.Body.Close()
 		if err != nil {
-			panic(err) // TODO
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
 		}
-		if err = json.Unmarshal(body, &i); err != nil {
-			fmt.Printf("%v", err)
+
+		var i service.Message
+		if err = json.Unmarshal(bodyBytes, &i); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
 		}
 		if err = datastore.CreateMessage(i); err != nil {
-			fmt.Printf("failed to create message: %v", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
 		}
 		w.WriteHeader(http.StatusCreated)
 	}

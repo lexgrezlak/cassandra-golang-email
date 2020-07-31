@@ -26,27 +26,30 @@ func GetMessagesByEmail(datastore service.MessageDatastore) http.HandlerFunc {
 		email := vars[EMAIL]
 		strLimit := r.URL.Query().Get(LIMIT)
 		limit, err := strconv.Atoi(strLimit)
-		if err != nil && strLimit != "" {
-			http.Error(w, "limit parameter is not a number", http.StatusBadRequest)
+		if err != nil && strLimit != "" && limit > 0 {
+			http.Error(w, "limit parameter must be a positive integer", http.StatusBadRequest)
 			return
 		}
 		cursor := r.URL.Query().Get(CURSOR)
 		messages, endCursor, err := datastore.GetMessagesByEmail(email, limit, cursor)
 		if err != nil {
-			fmt.Errorf("failed to get all messages by email: %v", err)
+			fmt.Printf("failed to get all messages by email: %v", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 
-		fmt.Printf("messages %v, cursor %v", messages, endCursor)
 		resData := getMessagesByEmailResponse{
 			Messages:  messages,
 			EndCursor: endCursor,
 		}
-		w.WriteHeader(http.StatusOK)
-		if payload, err := json.Marshal(resData); err == nil {
-			w.Write(payload)
+
+		payload, err := json.Marshal(resData)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
 		}
+		w.WriteHeader(http.StatusOK)
+		w.Write(payload)
 	}
 }
 
