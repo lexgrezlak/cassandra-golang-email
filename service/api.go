@@ -10,7 +10,7 @@ type api struct {
 
 type MessageDatastore interface {
 	CreateMessage(i Message) error
-	DeleteMessage(magicNumber int) error
+	SendMessage(magicNumber int) error
 	GetMessagesByEmail(email string, limit int, cursor string) ([]*Message, string, error)
 }
 
