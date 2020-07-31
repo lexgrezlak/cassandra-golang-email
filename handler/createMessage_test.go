@@ -14,12 +14,12 @@ import (
 
 func TestCreateMessage(t *testing.T) {
 	testCases := []struct {
-		name  string
-		want  int
+		name          string
+		want          int
 		createMessage func(i service.Message) error
 	}{
 		{"valid input", http.StatusCreated, nil},
-		{"api returns an error", http.StatusInternalServerError, func(i service.Message) error {
+		{"valid input, api returns an error", http.StatusInternalServerError, func(i service.Message) error {
 			return fmt.Errorf("failed to create message")
 		}},
 	}
@@ -30,7 +30,7 @@ func TestCreateMessage(t *testing.T) {
 			if tc.createMessage != nil {
 				api.MockCreateMessage = tc.createMessage
 			}
-					res := httptest.NewRecorder()
+			res := httptest.NewRecorder()
 
 			i := service.Message{
 				Email:       "hello@world.com",

@@ -28,4 +28,3 @@ func (api *mockApi) SendMessages(magicNumber int) error {
 	}
 	return nil
 }
-

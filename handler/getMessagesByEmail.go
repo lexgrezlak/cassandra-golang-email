@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
 	"request-golang/service"
@@ -33,7 +32,6 @@ func GetMessagesByEmail(datastore service.MessageDatastore) http.HandlerFunc {
 		cursor := r.URL.Query().Get(CURSOR)
 		messages, endCursor, err := datastore.GetMessagesByEmail(email, limit, cursor)
 		if err != nil {
-			fmt.Printf("failed to get all messages by email: %v", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
