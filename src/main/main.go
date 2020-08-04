@@ -12,12 +12,10 @@ import (
 	"time"
 )
 
-
-
 func main() {
 	// Initialize config. We could also set the config path as the environment variable.
 	// Environment variables will overwrite the config.
-	c, err := config.LoadConfig("../config.yml")
+	c, err := config.LoadConfig("config.yml")
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
 	}
@@ -41,7 +39,7 @@ func main() {
 	// Set up handlers.
 	r := mux.NewRouter()
 	r.HandleFunc("/api/message", handler.CreateMessage(api)).Methods("POST")
-	r.HandleFunc("/api/send", handler.SendMessages(api)).Methods("POST")
+	r.HandleFunc("/api/send", handler.SendMessages(api, c.Smtp)).Methods("POST")
 	// For paginated results use ?limit=5&cursor=hello-world, for example.
 	r.HandleFunc("/api/messages/{email}", handler.GetMessagesByEmail(api)).Methods("GET")
 

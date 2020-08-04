@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gocql/gocql"
 	"net/smtp"
+	"request-golang/src/config"
 	"time"
 )
 
@@ -69,7 +70,7 @@ func (api *api) GetMessagesByEmail(email string, limit int, encodedCursor string
 	return messages, endCursor, nil
 }
 
-func (api *api) SendMessages(magicNumber int) error {
+func (api *api) SendMessages(magicNumber int, c *config.SmtpConfig) error {
 	// Pull the ids of messages with the specified magicNumber
 	// to delete them later.
 	iter := api.session.Query(
@@ -98,7 +99,7 @@ func (api *api) SendMessages(magicNumber int) error {
 
 	// Send an email, and then delete it on each iteration.
 	for i, input := range sendEmailInputs {
-		err := sendEmail(input)
+		err := sendEmail(input, c)
 		if err != nil {
 			return fmt.Errorf("failed to send an email: %v", err)
 			// If the email has been successfully sent, delete the message
@@ -113,6 +114,7 @@ func (api *api) SendMessages(magicNumber int) error {
 	return nil
 }
 
+//
 func (api *api) CreateMessage(i Message) error {
 	if err := api.session.Query(
 		`INSERT INTO message (id, email, title, content, magic_number, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
@@ -122,6 +124,7 @@ func (api *api) CreateMessage(i Message) error {
 	return nil
 }
 
+// Deletes one message from the database with given id.
 func (api *api) deleteMessage(id *gocql.UUID) error {
 	if err := api.session.Query(`DELETE FROM message WHERE id=?`, id).Exec(); err != nil {
 		return err
@@ -129,14 +132,20 @@ func (api *api) deleteMessage(id *gocql.UUID) error {
 	return nil
 }
 
-func sendEmail(i *sendEmailInput) error {
+func sendEmail(i *sendEmailInput, c *config.SmtpConfig) error {
+	// I'm not sure if I should keep the auth here or keep it higher up
+	// in the code (efficiency?, to not have to make a connection every time?).
+	// I'd appreciate if you could comment on that.
+	auth := smtp.PlainAuth("", c.From, c.Password, "smtp.gmail.com")
+
+	// Email data.
 	to := []string{i.Email}
 	msg := []byte("To: " + i.Email + "\r\n" +
 		"Subject: " + i.Subject + "\r\n" +
 		"\r\n" +
 		i.Content + "\r\n")
-	smtpConfig := getSmtpConfig()
-	err := smtp.SendMail(smtpConfig.Address, smtpConfig.Auth, smtpConfig.From, to, msg)
+
+	err := smtp.SendMail(c.Address, auth, c.From, to, msg)
 	if err != nil {
 		return err
 	}

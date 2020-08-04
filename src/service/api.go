@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/gocql/gocql"
+	"request-golang/src/config"
 )
 
 type api struct {
@@ -10,7 +11,7 @@ type api struct {
 
 type MessageDatastore interface {
 	CreateMessage(i Message) error
-	SendMessages(magicNumber int) error
+	SendMessages(magicNumber int, c *config.SmtpConfig) error
 	GetMessagesByEmail(email string, limit int, cursor string) ([]*Message, string, error)
 }
 

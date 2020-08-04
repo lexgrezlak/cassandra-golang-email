@@ -11,15 +11,16 @@ type Config struct {
 		Keyspace string `yaml:"keyspace" env:"DB_KEYSPACE" env-default:"public"`
 		Host     string `yaml:"host" env:"DB_HOST" env-default:"cassandra"`
 	} `yaml:"db"`
-	Smtp struct {
-		Host     string `yaml:"host" env:"SMTP_HOST"`
-		Port     string `yaml:"port" env:"SMTP_PORT"`
-		From     string `yaml:"from" env:"SMTP_FROM"`
-		Password string `yaml:"password" env:"SMTP_PASSWORD"`
-	} `yaml:"smtp"`
+	Smtp *SmtpConfig `yaml:"smtp"`
 	Server struct {
 		Address string `yaml:"address" env:"SERVER_ADDRESS" env-default:"0.0.0.0:8080"`
 	} `yaml:"server"`
+}
+
+type SmtpConfig struct {
+		Address  string `yaml:"address" env:"SMTP_ADDRESS"`
+		From     string `yaml:"from" env:"SMTP_FROM"`
+		Password string `yaml:"password" env:"SMTP_PASSWORD"`
 }
 
 func LoadConfig(path string) (*Config, error) {
