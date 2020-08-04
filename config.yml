@@ -2,11 +2,10 @@ db:
   username: cassandra
   password: cassandra
   keyspace: public
-  host: cassandra
+  host: localhost
 server:
   address: 0.0.0.0:8080
 smtp:
-  host: smtp.gmail.com
-  port: 587
+  address: smtp.gmail.com:587
   from: ***REMOVED***
   password: ***REMOVED***
