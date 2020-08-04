@@ -116,9 +116,11 @@ func (api *api) SendMessages(magicNumber int, c *config.SmtpConfig) error {
 
 //
 func (api *api) CreateMessage(i Message) error {
+	id := gocql.TimeUUID()
+	createdAt := time.Now()
 	if err := api.session.Query(
 		`INSERT INTO message (id, email, title, content, magic_number, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
-		gocql.TimeUUID(), i.Email, i.Title, i.Content, i.MagicNumber, time.Now()).Exec(); err != nil {
+		id, i.Email, i.Title, i.Content, i.MagicNumber, createdAt).Exec(); err != nil {
 		return fmt.Errorf("failed to insert a message: %w", err)
 	}
 	return nil

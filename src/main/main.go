@@ -37,10 +37,10 @@ func main() {
 
 	// Set up handlers.
 	r := mux.NewRouter()
-	r.HandleFunc("/api/message", handler.CreateMessage(api)).Methods("POST")
-	r.HandleFunc("/api/send", handler.SendMessages(api, c.Smtp)).Methods("POST")
+	r.HandleFunc("/api/message", handler.CreateMessage(api)).Methods(http.MethodPost)
+	r.HandleFunc("/api/send", handler.SendMessages(api, c.Smtp)).Methods(http.MethodPost)
 	// For paginated results use ?limit=5&cursor=hello-world, for example.
-	r.HandleFunc("/api/messages/{email}", handler.GetMessagesByEmail(api)).Methods("GET")
+	r.HandleFunc("/api/messages/{email}", handler.GetMessagesByEmail(api)).Methods(http.MethodGet)
 
 	// Set up the server.
 	srv := &http.Server{
