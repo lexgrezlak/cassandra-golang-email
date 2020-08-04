@@ -23,6 +23,10 @@ func GetMessagesByEmail(datastore service.MessageDatastore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		email := vars[EMAIL]
+		if err := validateEmail(email); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 		strLimit := r.URL.Query().Get(LIMIT)
 		limit, err := strconv.Atoi(strLimit)
 		if err != nil && strLimit != "" && limit > 1 {
@@ -43,9 +47,10 @@ func GetMessagesByEmail(datastore service.MessageDatastore) http.HandlerFunc {
 
 		payload, err := json.Marshal(resData)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
+
 		w.WriteHeader(http.StatusOK)
 		w.Write(payload)
 	}

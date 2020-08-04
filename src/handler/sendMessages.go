@@ -13,16 +13,18 @@ type SendMessagesInput struct {
 
 func SendMessages(datastore service.MessageDatastore, c *config.SmtpConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Validate the JSON and get the data.
 		var i SendMessagesInput
-		statusCode, err := util.Unmarshal(w, r, &i)
+		errStatusCode, err := util.Unmarshal(w, r, &i)
 		if err != nil {
-			w.WriteHeader(statusCode)
-			w.Write([]byte(err.Error()))
+			http.Error(w, err.Error(), errStatusCode)
+			return
 		}
 
+		// Send messages with given magic number and delete them from the database
 		if err = datastore.SendMessages(i.MagicNumber, c); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
 		w.WriteHeader(http.StatusOK)
