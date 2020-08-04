@@ -25,10 +25,6 @@ type smtpConfig struct {
 }
 
 func getSmtpConfig() *smtpConfig {
-	// Again, you should never put your API keys, credentials, urls, etc.
-	// into your code, even for testing or dev. We're doing it for the purposes
-	// of program specification, because it's supposed to work out of the box
-	// when you pull it from Docker Hub, so we assume we're not gonna make you configure it.
 	host := "smtp.gmail.com"
 	port := "587"
 	address := host + ":" + port

@@ -9,7 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"request-golang/service"
+	"request-golang/src/service"
 	"testing"
 	"time"
 )

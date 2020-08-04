@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"net/http"
-	"request-golang/service"
+	"request-golang/src/service"
 	"strconv"
 )
 

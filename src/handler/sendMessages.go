@@ -2,8 +2,8 @@ package handler
 
 import (
 	"net/http"
-	"request-golang/service"
-	"request-golang/util"
+	"request-golang/src/service"
+	"request-golang/src/util"
 )
 
 type SendMessagesInput struct {

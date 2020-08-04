@@ -6,23 +6,28 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
-	"request-golang/handler"
-	"request-golang/service"
+	"request-golang/src/config"
+	"request-golang/src/handler"
+	"request-golang/src/service"
 	"time"
 )
 
+
+
 func main() {
-	cluster := gocql.NewCluster("cassandra")
-	cluster.Keyspace = "public"
+	// Initialize config.
+	c, err := config.LoadConfig("../config.yml")
+	if err != nil {
+		log.Fatalf("failed to load config: %v", err)
+	}
+
+	// Set up the cluster and create a session.
+	cluster := gocql.NewCluster(c.Db.Host)
+	cluster.Keyspace = c.Db.Keyspace
 	cluster.Consistency = gocql.All
 	cluster.Authenticator = gocql.PasswordAuthenticator{
-		// We would normally use environment variables but we're supposed
-		// to push the docker image into docker hub and ensure it's working
-		// so we're not gonna make others spend time on creating .env file
-		// Overall you shouldn't ever store such data in your code,
-		// even for testing or development.
-		Username: "cassandra",
-		Password: "cassandra",
+		Username: c.Db.Username,
+		Password: c.Db.Password,
 	}
 	session, err := cluster.CreateSession()
 	if err != nil {
@@ -31,17 +36,21 @@ func main() {
 	defer session.Close()
 
 	api := service.NewAPI(session)
+
+	// Set up handlers.
 	r := mux.NewRouter()
 	r.HandleFunc("/api/message", handler.CreateMessage(api)).Methods("POST")
 	r.HandleFunc("/api/send", handler.SendMessages(api)).Methods("POST")
-	// For paginated results use ?limit=5&cursor=hello-world for example
+	// For paginated results use ?limit=5&cursor=hello-world, for example.
 	r.HandleFunc("/api/messages/{email}", handler.GetMessagesByEmail(api)).Methods("GET")
 
+	// Set up the server.
 	srv := &http.Server{
 		Handler:      r,
-		Addr:         "0.0.0.0:8080",
+		Addr:         c.Server.Address,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
+		IdleTimeout:  120 * time.Second,
 	}
 	fmt.Println("Listening at:", srv.Addr)
 	log.Fatal(srv.ListenAndServe())

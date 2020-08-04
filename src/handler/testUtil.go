@@ -1,6 +1,6 @@
 package handler
 
-import "request-golang/service"
+import "request-golang/src/service"
 
 type mockApi struct {
 	MockCreateMessage      func(i service.Message) error
