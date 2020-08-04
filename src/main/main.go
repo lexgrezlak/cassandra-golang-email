@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/gocql/gocql"
 	"github.com/gorilla/mux"
 	"log"
@@ -15,7 +14,7 @@ import (
 func main() {
 	// Initialize config. We could also set the config path as the environment variable.
 	// Environment variables will overwrite the config.
-	c, err := config.LoadConfig("config.yml")
+	c, err := config.GetConfig("config.yml")
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
 	}
@@ -51,6 +50,7 @@ func main() {
 		ReadTimeout:  15 * time.Second,
 		IdleTimeout:  120 * time.Second,
 	}
-	fmt.Printf("Listening at: %v", srv.Addr)
-	log.Fatal(srv.ListenAndServe())
+	log.Printf("Listening at: %v", srv.Addr)
+	err = srv.ListenAndServe()
+	log.Fatal(err)
 }

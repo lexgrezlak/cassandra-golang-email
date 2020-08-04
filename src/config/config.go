@@ -23,7 +23,7 @@ type SmtpConfig struct {
 		Password string `yaml:"password" env:"SMTP_PASSWORD"`
 }
 
-func LoadConfig(path string) (*Config, error) {
+func GetConfig(path string) (*Config, error) {
 	var c Config
 	if err := cleanenv.ReadConfig(path, &c); err != nil {
 		return nil, err
