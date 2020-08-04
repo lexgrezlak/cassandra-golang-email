@@ -15,7 +15,8 @@ import (
 
 
 func main() {
-	// Initialize config.
+	// Initialize config. We could also set the config path as the environment variable.
+	// Environment variables will overwrite the config.
 	c, err := config.LoadConfig("../config.yml")
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
@@ -31,7 +32,7 @@ func main() {
 	}
 	session, err := cluster.CreateSession()
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to create session: %v", err)
 	}
 	defer session.Close()
 
@@ -52,6 +53,6 @@ func main() {
 		ReadTimeout:  15 * time.Second,
 		IdleTimeout:  120 * time.Second,
 	}
-	fmt.Println("Listening at:", srv.Addr)
+	fmt.Printf("Listening at: %v", srv.Addr)
 	log.Fatal(srv.ListenAndServe())
 }
