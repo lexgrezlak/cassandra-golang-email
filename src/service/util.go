@@ -15,3 +15,9 @@ func decodeCursor(encodedCursor string) ([]byte, error) {
 	}
 	return decodedCursor, nil
 }
+
+type FetchParams struct {
+	Limit int `validate:"omitempty,min=1,max=100,ne=0"`
+	// For some reason tag `base64` doesn't work.
+	Cursor string `validate:"omitempty"`
+}
