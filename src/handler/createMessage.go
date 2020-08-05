@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"github.com/go-playground/validator/v10"
+	"log"
 	"net/http"
 	"request-golang/src/service"
 	"request-golang/src/util"
@@ -9,17 +11,19 @@ import (
 // CreateMessage is a handler for route GET /api/message
 func CreateMessage(datastore service.MessageDatastore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var i service.Message
+		var i service.CreateMessageInput
 
-		// Validate the JSON.
+		// Validate and unmarshal the JSON.
 		statusCode, err := util.Unmarshal(w, r, &i)
 		if err != nil {
 			http.Error(w, err.Error(), statusCode)
 			return
 		}
 
-		// Check if the email is a valid email.
-		if err = validateEmail(i.Email); err != nil {
+		log.Println(i)
+		// Validate the input.
+		validate := validator.New()
+		if err = validate.Struct(i); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}

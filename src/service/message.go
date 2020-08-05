@@ -23,33 +23,45 @@ type sendEmailInput struct {
 	Content string
 }
 
-type Message struct {
-	Id          gocql.UUID `json:"id"`
-	Email       string     `json:"email"`
-	Title       string     `json:"title"`
-	Content     string     `json:"content"`
-	MagicNumber int        `json:"magic_number"`
-	// We assume camelCase is better for json,
-	// the magic_number is gonna be the exception in this program
-	// just to follow the specification
-	CreatedAt time.Time `json:"createdAt"`
+type GetMessagesByEmailInput struct {
+	Email string `validate:"email"`
+	Params FetchParams
 }
 
-func (api *api) GetMessagesByEmail(email string, limit int, encodedCursor string) ([]*Message, string, error) {
+type CreateMessageInput struct {
+	Email       string     `json:"email" validate:"email"`
+	Title       string     `json:"title" validate:"required,max=200"`
+	Content     string     `json:"content" validate:"required,max=5000"`
+	// We assume camelCase is better for json,
+	// the magic_number is gonna be the exception in this program
+	// just to follow the specification.
+	MagicNumber int        `json:"magic_number" validate:"required"`
+}
+
+type Message struct {
+	Id          gocql.UUID
+	Email       string
+	Title       string
+	Content     string
+	MagicNumber int
+	CreatedAt time.Time
+}
+
+func (api *api) GetMessagesByEmail(i GetMessagesByEmailInput) ([]*Message, string, error) {
 	var messages []*Message
 	var state []byte
 	state = nil
 	// Defaults to nil in case of an empty cursor.
-	if encodedCursor != "" {
-		if cursor, err := decodeCursor(encodedCursor); err == nil {
+	if i.Params.Cursor != "" {
+		if cursor, err := decodeCursor(i.Params.Cursor); err == nil {
 			state = cursor
 		}
 	}
 	q := api.session.Query(
 		`SELECT id, email, title, content, magic_number, created_at FROM message WHERE email=?`,
-		email).PageState(state)
-	if limit > 0 {
-		q.PageSize(limit)
+		i.Email).PageState(state)
+	if i.Params.Limit > 0 {
+		q.PageSize(i.Params.Limit)
 	}
 	iter := q.Iter()
 	endCursor := encodeCursor(iter.PageState())
@@ -115,7 +127,7 @@ func (api *api) SendMessages(magicNumber int, c *config.SmtpConfig) error {
 }
 
 //
-func (api *api) CreateMessage(i Message) error {
+func (api *api) CreateMessage(i CreateMessageInput) error {
 	id := gocql.TimeUUID()
 	createdAt := time.Now()
 	if err := api.session.Query(

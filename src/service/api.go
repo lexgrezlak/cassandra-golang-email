@@ -10,9 +10,9 @@ type api struct {
 }
 
 type MessageDatastore interface {
-	CreateMessage(i Message) error
+	CreateMessage(i CreateMessageInput) error
 	SendMessages(magicNumber int, c *config.SmtpConfig) error
-	GetMessagesByEmail(email string, limit int, cursor string) ([]*Message, string, error)
+	GetMessagesByEmail(i GetMessagesByEmailInput) ([]*Message, string, error)
 }
 
 func NewAPI(session *gocql.Session) *api {
