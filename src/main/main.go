@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"request-golang/src/config"
 	"request-golang/src/handler"
+	"request-golang/src/middleware"
 	"request-golang/src/service"
 	"time"
 )
@@ -35,8 +36,10 @@ func main() {
 
 	api := service.NewAPI(session)
 
-	// Set up handlers.
 	r := mux.NewRouter()
+	r.Use(middleware.RequestLimiter)
+
+	// Set up handlers.
 	r.HandleFunc("/api/message", handler.CreateMessage(api)).Methods(http.MethodPost)
 	r.HandleFunc("/api/send", handler.SendMessages(api, c.Smtp)).Methods(http.MethodPost)
 	// For paginated results use ?limit=5&cursor=hello-world, for example.

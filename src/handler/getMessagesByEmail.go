@@ -27,6 +27,7 @@ func GetMessagesByEmail(datastore service.MessageDatastore) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+
 		strLimit := r.URL.Query().Get(LIMIT)
 		limit, err := strconv.Atoi(strLimit)
 		if err != nil && strLimit != "" && limit > 1 {
