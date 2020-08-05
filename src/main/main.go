@@ -37,12 +37,16 @@ func main() {
 	api := service.NewAPI(session)
 
 	r := mux.NewRouter()
+
+	// Set up middleware.
 	r.Use(middleware.RequestLimiter)
+	r.Use(middleware.Logger)
 
 	// Set up handlers.
 	r.HandleFunc("/api/message", handler.CreateMessage(api)).Methods(http.MethodPost)
 	r.HandleFunc("/api/send", handler.SendMessages(api, c.Smtp)).Methods(http.MethodPost)
 	// For paginated results use ?limit=5&cursor=hello-world, for example.
+	// Limit can be an integer from 1 to 100.
 	r.HandleFunc("/api/messages/{email}", handler.GetMessagesByEmail(api)).Methods(http.MethodGet)
 
 	// Set up the server.
