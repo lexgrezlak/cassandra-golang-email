@@ -13,15 +13,29 @@ import (
 )
 
 func TestCreateMessage(t *testing.T) {
+	validInput := service.CreateMessageInput{
+		Email:       "hello@world.com",
+		Title:       "Hello World",
+		Content:     "Content 111.",
+		MagicNumber: 324,
+	}
+
+	invalidInput := service.CreateMessageInput{
+		Email:       "hello@world.com",
+		MagicNumber: 324,
+	}
+
 	testCases := []struct {
 		name          string
 		wantCode      int
+		input 		  service.CreateMessageInput
 		createMessage func(i service.CreateMessageInput) error
 	}{
-		{"valid input", http.StatusCreated, nil},
-		{"valid input, api returns an error", http.StatusInternalServerError, func(i service.CreateMessageInput) error {
+		{"valid input", http.StatusCreated, validInput,nil},
+		{"valid input, api returns an error", http.StatusInternalServerError,validInput, func(i service.CreateMessageInput) error {
 			return errors.New("failed to create message")
 		}},
+		{"invalid input", http.StatusBadRequest, invalidInput,nil},
 	}
 
 	for _, tc := range testCases {
@@ -32,14 +46,9 @@ func TestCreateMessage(t *testing.T) {
 			}
 			res := httptest.NewRecorder()
 
-			i := service.CreateMessageInput{
-				Email:       "hello@world.com",
-				Title:       "Hello World",
-				Content:     "Content 111.",
-				MagicNumber: 324,
-			}
+
 			buf := new(bytes.Buffer)
-			if err := json.NewEncoder(buf).Encode(i); err != nil {
+			if err := json.NewEncoder(buf).Encode(tc.input); err != nil {
 				log.Fatal(err)
 			}
 			req := httptest.NewRequest("POST", "/api/message", buf)
