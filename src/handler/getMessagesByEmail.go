@@ -24,8 +24,8 @@ func GetMessagesByEmail(datastore service.MessageDatastore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		email := vars[EMAIL]
-
 		strLimit := r.URL.Query().Get(LIMIT)
+
 		// Try to transform the string limit to an integer and check if it's not negative.
 		// If its value is 0, we won't apply the limit, since it's also a default "undefined" value.
 		limit, err := strconv.Atoi(strLimit)
@@ -53,12 +53,7 @@ func GetMessagesByEmail(datastore service.MessageDatastore) http.HandlerFunc {
 			return
 		}
 
-		messages, endCursor, err := datastore.GetMessagesByEmail(i)
-		if err != nil {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
-
+		messages, endCursor := datastore.GetMessagesByEmail(i)
 		resData := getMessagesByEmailResponse{
 			Messages:  messages,
 			EndCursor: endCursor,

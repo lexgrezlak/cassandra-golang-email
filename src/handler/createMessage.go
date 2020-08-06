@@ -2,7 +2,6 @@ package handler
 
 import (
 	"github.com/go-playground/validator/v10"
-	"log"
 	"net/http"
 	"request-golang/src/service"
 	"request-golang/src/util"
@@ -20,7 +19,6 @@ func CreateMessage(datastore service.MessageDatastore) http.HandlerFunc {
 			return
 		}
 
-		log.Println(i)
 		// Validate the input.
 		validate := validator.New()
 		if err = validate.Struct(i); err != nil {
