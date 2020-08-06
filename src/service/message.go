@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"github.com/gocql/gocql"
+	"log"
 	"net/smtp"
 	"request-golang/src/config"
 	"time"
@@ -35,19 +36,22 @@ type CreateMessageInput struct {
 	// We assume camelCase is better for json,
 	// the magic_number is gonna be the exception in this program
 	// just to follow the specification.
+	// Magic number can't be 0 (it's a default "undefined" value),
+	// so that we can detect if magic number has been specified in the
+	// body of a request.
 	MagicNumber int        `json:"magic_number" validate:"required"`
 }
 
 type Message struct {
-	Id          gocql.UUID
-	Email       string
-	Title       string
-	Content     string
-	MagicNumber int
-	CreatedAt time.Time
+	Id          gocql.UUID `json:"id"`
+	Email       string `json:"email"`
+	Title       string `json:"title"`
+	Content     string `json:"content"`
+	MagicNumber int `json:"magic_number"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
-func (api *api) GetMessagesByEmail(i GetMessagesByEmailInput) ([]*Message, string, error) {
+func (api *api) GetMessagesByEmail(i GetMessagesByEmailInput) ([]*Message, string) {
 	var messages []*Message
 	var state []byte
 	state = nil
@@ -64,7 +68,7 @@ func (api *api) GetMessagesByEmail(i GetMessagesByEmailInput) ([]*Message, strin
 		q.PageSize(i.Params.Limit)
 	}
 	iter := q.Iter()
-	endCursor := encodeCursor(iter.PageState())
+	defer iter.Close()
 
 	m := map[string]interface{}{}
 	for iter.MapScan(m) {
@@ -79,7 +83,9 @@ func (api *api) GetMessagesByEmail(i GetMessagesByEmailInput) ([]*Message, strin
 		messages = append(messages, message)
 		m = map[string]interface{}{}
 	}
-	return messages, endCursor, nil
+
+	endCursor := encodeCursor(iter.PageState())
+	return messages, endCursor
 }
 
 func (api *api) SendMessages(magicNumber int, c *config.SmtpConfig) error {
@@ -110,15 +116,17 @@ func (api *api) SendMessages(magicNumber int, c *config.SmtpConfig) error {
 	}
 
 	// Send an email, and then delete it on each iteration.
-	for i, input := range sendEmailInputs {
+	for index, input := range sendEmailInputs {
 		err := sendEmail(input, c)
 		if err != nil {
-			return fmt.Errorf("failed to send an email: %v", err)
-			// If the email has been successfully sent, delete the message
+			log.Printf("failed to send email: %v",err)
+			return err
 		} else {
-			err := api.deleteMessage(ids[i])
+			// If the email has been successfully sent, delete the message
+			err := api.deleteMessage(ids[index])
 			if err != nil {
-				return fmt.Errorf("failed to delete messages: %v", err)
+				log.Printf("failed to delete messages: %v", err)
+				return err
 			}
 		}
 	}
@@ -126,14 +134,14 @@ func (api *api) SendMessages(magicNumber int, c *config.SmtpConfig) error {
 	return nil
 }
 
-//
 func (api *api) CreateMessage(i CreateMessageInput) error {
 	id := gocql.TimeUUID()
 	createdAt := time.Now()
 	if err := api.session.Query(
 		`INSERT INTO message (id, email, title, content, magic_number, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
 		id, i.Email, i.Title, i.Content, i.MagicNumber, createdAt).Exec(); err != nil {
-		return fmt.Errorf("failed to insert a message: %w", err)
+		log.Printf("failed to insert message: %v", err)
+		return err
 	}
 	return nil
 }
@@ -141,6 +149,7 @@ func (api *api) CreateMessage(i CreateMessageInput) error {
 // Deletes one message from the database with given id.
 func (api *api) deleteMessage(id *gocql.UUID) error {
 	if err := api.session.Query(`DELETE FROM message WHERE id=?`, id).Exec(); err != nil {
+		log.Printf("failed to delete message: %v",err)
 		return err
 	}
 	return nil
@@ -161,6 +170,7 @@ func sendEmail(i *sendEmailInput, c *config.SmtpConfig) error {
 
 	err := smtp.SendMail(c.Address, auth, c.From, to, msg)
 	if err != nil {
+		log.Printf("failed to send mail: %v", err)
 		return err
 	}
 	return nil
