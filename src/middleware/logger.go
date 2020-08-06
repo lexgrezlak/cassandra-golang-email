@@ -13,6 +13,7 @@ type statusWriter struct {
 	length int
 }
 
+// Status writer is crucial to get the status code of the request.
 func (w *statusWriter) WriteHeader(status int) {
 	w.status = status
 	w.ResponseWriter.WriteHeader(status)
@@ -27,7 +28,7 @@ func (w *statusWriter) Write(b []byte) (int, error) {
 	return n, err
 }
 
-// LoggingMiddleware logs the incoming HTTP request & its duration.
+// Logger logs the incoming HTTP request and its duration.
 func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
@@ -41,13 +42,7 @@ func Logger(next http.Handler) http.Handler {
 		sw := &statusWriter{ResponseWriter: w}
 
 		start := time.Now()
-		// We have to next it before logging, so that we get the status code.
-		// Since, the duration numbers are higher.
 		next.ServeHTTP(sw, r)
-		log.Println("--------------")
-		log.Printf("status: %v", sw.status)
-		log.Printf("method: %v", r.Method)
-		log.Printf("path: %v", r.URL.EscapedPath())
-		log.Printf("duration: %v", time.Since(start))
+		log.Printf("status=%v method=%v path=%v duration=%v", sw.status, r.Method, r.URL.EscapedPath(), time.Since(start))
 	})
 }
