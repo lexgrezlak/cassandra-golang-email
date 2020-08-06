@@ -27,6 +27,8 @@ services:
     ports:
       - "8080:8080"
     restart: always
+    env_file:
+      - docker.env
     networks:
       - app
     depends_on:
