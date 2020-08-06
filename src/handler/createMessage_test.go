@@ -2,10 +2,8 @@ package handler
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"github.com/google/go-cmp/cmp"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"request-golang/src/service"
@@ -13,22 +11,14 @@ import (
 )
 
 func TestCreateMessage(t *testing.T) {
-	validInput := service.CreateMessageInput{
-		Email:       "hello@world.com",
-		Title:       "Hello World",
-		Content:     "Content 111.",
-		MagicNumber: 324,
-	}
+	validInput := `{"email":"hello@world.com","title":"test-title","content":"test-content","magic_number":343}`
 
-	invalidInput := service.CreateMessageInput{
-		Email:       "hello@world.com",
-		MagicNumber: 324,
-	}
+	invalidInput := `{"email":"john@he.com","title":"title-2"}`
 
 	testCases := []struct {
 		name          string
 		wantCode      int
-		input 		  service.CreateMessageInput
+		input 		  string
 		createMessage func(i service.CreateMessageInput) error
 	}{
 		{"valid input", http.StatusCreated, validInput,nil},
@@ -45,18 +35,12 @@ func TestCreateMessage(t *testing.T) {
 				api.MockCreateMessage = tc.createMessage
 			}
 			res := httptest.NewRecorder()
-
-
-			buf := new(bytes.Buffer)
-			if err := json.NewEncoder(buf).Encode(tc.input); err != nil {
-				log.Fatal(err)
-			}
-			req := httptest.NewRequest("POST", "/api/message", buf)
+			req := httptest.NewRequest("POST", "/api/message", bytes.NewBufferString(tc.input))
 			h := CreateMessage(api)
 			h(res, req)
 
-			got := res.Code
-			if diff := cmp.Diff(tc.wantCode, got); diff != "" {
+			gotCode := res.Code
+			if diff := cmp.Diff(tc.wantCode, gotCode); diff != "" {
 				t.Errorf("mismatch (-wantCode, +got): \n%s", diff)
 			}
 		})
