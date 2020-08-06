@@ -5,66 +5,46 @@ import (
 	"fmt"
 	"github.com/gocql/gocql"
 	"github.com/google/go-cmp/cmp"
-	"io/ioutil"
-	"log"
-	"net/http"
+	"github.com/gorilla/mux"
 	"net/http/httptest"
 	"request-golang/src/service"
 	"testing"
-	"time"
 )
 
 func TestGetMessagesByEmail(t *testing.T) {
-	msg1 := service.Message{
-		Id:          gocql.TimeUUID(),
-		Email:       "john@doe.com",
-		Title:       "Title1",
-		Content:     "Content1",
-		MagicNumber: 32,
-		CreatedAt:   time.Now(),
+	email := "john@doe.com"
+	jsonMessages := fmt.Sprintf(
+		`{"messages":[{"id":"%s","email":"test-email","title":"test-title","content":"test-content","magic_number":12313,"createdAt":"%s"}],"endCursor":"hello"}`,
+		gocql.TimeUUID(), "2019-02-02T15:04:05Z")
+	var getMessagesByEmailResult struct{
+		Messages []*service.Message `json:"messages"`
+		EndCursor string `json:"endCursor"`
 	}
-	msg2 := service.Message{
-		Id:          gocql.TimeUUID(),
-		Email:       "qwerty@gmail.com",
-		Title:       "test-title",
-		Content:     "test-content",
-		MagicNumber: 11,
-		CreatedAt:   time.Now(),
+	err := json.Unmarshal([]byte(jsonMessages), &getMessagesByEmailResult)
+	if err != nil {
+		t.Fatalf("failed to unmarshal messages: %v", err)
 	}
 
-	testCases := []struct {
+	testCases := []struct{
 		name               string
+		getMessagesByEmail func(i service.GetMessagesByEmailInput) ([]*service.Message, string)
 		wantCode           int
-		getMessagesByEmail func(email string, limit int, cursor string) ([]*service.Message, string, error)
-		wantRes            getMessagesByEmailResponse
+		wantBody           string
 	}{
+		// API can't return an error, so there's no test for that
 		{
-			"valid input",
-			http.StatusOK,
+			"api returns no messages",
 			nil,
-			getMessagesByEmailResponse{
-				Messages:  nil,
-				EndCursor: "",
-			},
+			200,
+			`{"messages":null,"endCursor":""}`,
 		},
 		{
-			"valid input and api returns an error",
-			http.StatusInternalServerError,
-			func(email string, limit int, cursor string) ([]*service.Message, string, error) {
-				return nil, "", fmt.Errorf("failed to get messages")
+			"api returns messages",
+			func(i service.GetMessagesByEmailInput) ([]*service.Message, string) {
+				return getMessagesByEmailResult.Messages, getMessagesByEmailResult.EndCursor
 			},
-			getMessagesByEmailResponse{},
-		},
-		{
-			"valid input and api returns an array of messages with cursor",
-			http.StatusOK,
-			func(email string, limit int, cursor string) ([]*service.Message, string, error) {
-				return []*service.Message{&msg1, &msg2}, "encoded-cursor", nil
-			},
-			getMessagesByEmailResponse{
-				Messages:  []*service.Message{&msg1, &msg2},
-				EndCursor: "encoded-cursor",
-			},
+			200,
+			jsonMessages,
 		},
 	}
 
@@ -75,33 +55,26 @@ func TestGetMessagesByEmail(t *testing.T) {
 				api.MockGetMessagesByEmail = tc.getMessagesByEmail
 			}
 			res := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", "/api/messages/john@doe.com", nil)
+			req := httptest.NewRequest("GET", "/api/messages/" + email, nil)
+			// We have to set url vars for unit testing, otherwise gorilla mux won't register
+			// our vars, so the email would be an empty string.
+			vars := map[string]string{
+				"email": email,
+			}
+			req = mux.SetURLVars(req, vars)
 			h := GetMessagesByEmail(api)
 			h(res, req)
 			gotCode := res.Code
+
+			// Check for the status code
 			if diff := cmp.Diff(tc.wantCode, gotCode); diff != "" {
 				t.Errorf("mismatch (-wantCode, +gotCode): \n%s", diff)
 			}
-
-			// If the status code isn't 200, finish here, if we didn't skip then we'd get,
-			// for example, `Internal Server Error` instead of the object we want.
-			// We could as well wrap all the latter part with an if statement
-			if gotCode != http.StatusOK {
-				t.SkipNow()
-			}
-
-			// Only applies to status code 200, check if messages and end cursor are there.
-			data, err := ioutil.ReadAll(res.Body)
-			if err != nil {
-				log.Fatal(err)
-			}
-			expectedData, err := json.Marshal(tc.wantRes)
-			if err != nil {
-				log.Fatal(err)
-			}
-			if diff := cmp.Diff(string(expectedData), string(data)); diff != "" {
+			// Check for the response body
+			if diff := cmp.Diff(tc.wantBody, res.Body.String()); diff != "" {
 				t.Errorf("mismatch (-wantCode, +gotCode): \n%s", diff)
 			}
+
 		})
 	}
 }

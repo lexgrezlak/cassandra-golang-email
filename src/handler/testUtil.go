@@ -22,7 +22,7 @@ func (api *mockApi) GetMessagesByEmail(i service.GetMessagesByEmailInput) ([]*se
 	if api.MockGetMessagesByEmail != nil {
 		return api.MockGetMessagesByEmail(i)
 	}
-	return nil, "test-cursor"
+	return nil, ""
 }
 
 func (api *mockApi) SendMessages(magicNumber int, c *config.SmtpConfig) error {
