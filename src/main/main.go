@@ -41,8 +41,8 @@ func main() {
 	r := mux.NewRouter()
 
 	// Set up middleware.
-	r.Use(middleware.RequestLimiter)
 	r.Use(middleware.Logger)
+	r.Use(middleware.RequestLimiter)
 
 	// Set up handlers.
 	r.HandleFunc("/api/message", handler.CreateMessage(api)).Methods(http.MethodPost)
