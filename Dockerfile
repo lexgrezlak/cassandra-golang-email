@@ -10,7 +10,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN go build -o main ./main
+RUN go build -o main ./src/main
 
 FROM alpine:latest
 
