@@ -2,32 +2,51 @@ package handler
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"github.com/google/go-cmp/cmp"
-	"log"
 	"net/http"
 	"net/http/httptest"
+	"request-golang/src/config"
 	"testing"
 )
 
 func TestSendMessages(t *testing.T) {
+	validInput := `{"magic_number": 232}`
+	invalidInput := `{"magic_number": "hello"}`
+	invalidEmptyInput := ``
 	testCases := []struct {
 		name         string
+		// Input is a json string.
+		input        string
 		want         int
-		sendMessages func(magicNumber int) error
+		sendMessages func(magicNumber int, c *config.SmtpConfig) error
 	}{
 		{
 			"valid input",
+			validInput,
 			http.StatusOK,
 			nil,
 		},
 		{
 			"valid input and api returns an error",
+			validInput,
 			http.StatusInternalServerError,
-			func(magicNumber int) error {
+			func(magicNumber int, c *config.SmtpConfig) error {
 				return fmt.Errorf("failed to send messages")
 			}},
+			{
+			"invalid non-empty input",
+			invalidInput,
+			http.StatusBadRequest,
+			nil,
+			},
+			{
+			"invalid empty input",
+			invalidEmptyInput,
+			http.StatusBadRequest,
+			nil,
+			},
+
 	}
 
 	for _, tc := range testCases {
@@ -37,15 +56,9 @@ func TestSendMessages(t *testing.T) {
 				api.MockSendMessages = tc.sendMessages
 			}
 			res := httptest.NewRecorder()
+			req := httptest.NewRequest("POST", "/api/send", bytes.NewBufferString(tc.input))
 
-			i := SendMessagesInput{MagicNumber: 390}
-			buf := new(bytes.Buffer)
-			if err := json.NewEncoder(buf).Encode(i); err != nil {
-				log.Fatal(err)
-			}
-			req := httptest.NewRequest("POST", "/api/send", buf)
-
-			h := SendMessages(api)
+			h := SendMessages(api, &config.SmtpConfig{})
 			h(res, req)
 			got := res.Code
 			if diff := cmp.Diff(tc.want, got); diff != "" {
