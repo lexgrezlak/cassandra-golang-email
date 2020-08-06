@@ -7,5 +7,5 @@ server:
   address: 0.0.0.0:8080
 smtp:
   address: smtp.gmail.com:587
-  from: ***REMOVED***
-  password: ***REMOVED***
+  from: reqgo1239@gmail.com
+  password: GoAlpine@@@!!123
