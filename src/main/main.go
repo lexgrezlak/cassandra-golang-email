@@ -13,15 +13,14 @@ import (
 )
 
 func main() {
-	// Initialize config. We could also set the config path as the environment variable.
-	// You have to run the app while being in the project's root folder,
-	// so that the path works correctly.
-	//
-	// Environment variables will overwrite the config.
-	c, err := config.GetConfig("config.yml")
+	// Initialize config. If it can't find the file, it will load the variables
+	// from the environment. It would be a good idea to read the file path to the config
+	// from environment, because we might want to have `test.yml` or some other config.
+	c, err := config.GetConfig("development.yml")
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
 	}
+	log.Printf("config has been loaded: %v", c)
 
 	// Set up the cluster and create a session.
 	cluster := gocql.NewCluster(c.Db.Host)
@@ -49,7 +48,7 @@ func main() {
 
 	// Set up handlers.
 	r.HandleFunc("/api/message", handler.CreateMessage(api)).Methods(http.MethodPost)
-	r.HandleFunc("/api/send", handler.SendMessages(api, c.Smtp)).Methods(http.MethodPost)
+	r.HandleFunc("/api/send", handler.SendMessages(api, &c.Smtp)).Methods(http.MethodPost)
 	// For paginated results use ?limit=5&cursor=hello-world, for example.
 	// Limit can be an integer from 1 to 100.
 	r.HandleFunc("/api/messages/{email}", handler.GetMessagesByEmail(api)).Methods(http.MethodGet)
