@@ -2,7 +2,7 @@
 ```
 curl -X POST localhost:8080/api/message -d '{"email":"john@gmail.com","title":"Hello World","content":"simple text","magic_number":101}'
 ```
-Add message to the database
+Add a message to the database
 
 
 ```

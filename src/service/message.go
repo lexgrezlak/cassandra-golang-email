@@ -19,9 +19,9 @@ const (
 )
 
 type deleteMessageInput struct {
-	Id        gocql.UUID
+	Id gocql.UUID
 	CreatedAt time.Time
-	Email     string
+	Email string
 }
 
 type sendEmailInput struct {
@@ -31,30 +31,30 @@ type sendEmailInput struct {
 }
 
 type GetMessagesByEmailInput struct {
-	Email  string `validate:"email"`
+	Email string `validate:"email"`
 	Params FetchParams
 }
 
 type CreateMessageInput struct {
-	Email   string `json:"email" validate:"email"`
-	Title   string `json:"title" validate:"required,max=200"`
-	Content string `json:"content" validate:"required,max=5000"`
+	Email       string     `json:"email" validate:"email"`
+	Title       string     `json:"title" validate:"required,max=200"`
+	Content     string     `json:"content" validate:"required,max=5000"`
 	// We assume camelCase is better for json,
 	// the magic_number is gonna be the exception in this program
 	// just to follow the specification.
 	// Magic number can't be 0 (it's a default "undefined" value),
 	// so that we can detect if magic number has been specified in the
 	// body of a request.
-	MagicNumber int `json:"magic_number" validate:"required"`
+	MagicNumber int        `json:"magic_number" validate:"required"`
 }
 
 type Message struct {
 	Id          gocql.UUID `json:"id"`
-	Email       string     `json:"email"`
-	Title       string     `json:"title"`
-	Content     string     `json:"content"`
-	MagicNumber int        `json:"magic_number"`
-	CreatedAt   time.Time  `json:"createdAt"`
+	Email       string `json:"email"`
+	Title       string `json:"title"`
+	Content     string `json:"content"`
+	MagicNumber int `json:"magic_number"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 // Gets the messages from the database and returns them along with an end cursor
@@ -114,7 +114,7 @@ func (api *api) SendMessages(magicNumber int, c *config.SmtpConfig) error {
 		deleteInput := deleteMessageInput{
 			Id:        m[ID].(gocql.UUID),
 			CreatedAt: m[CREATED_AT].(time.Time),
-			Email:     m[EMAIL].(string),
+			Email: m[EMAIL].(string),
 		}
 		deleteMessageInputs = append(deleteMessageInputs, &deleteInput)
 
@@ -132,7 +132,7 @@ func (api *api) SendMessages(magicNumber int, c *config.SmtpConfig) error {
 	for index, input := range sendEmailInputs {
 		err := sendEmail(input, c)
 		if err != nil {
-			log.Printf("failed to send email: %v", err)
+			log.Printf("failed to send email: %v",err)
 			return err
 		} else {
 			// If the email has been successfully sent, delete the message
@@ -159,12 +159,13 @@ func (api *api) CreateMessage(i CreateMessageInput) error {
 	return nil
 }
 
+
 // Deletes one message from the database with given id.
 func (api *api) deleteMessage(i *deleteMessageInput) error {
 	// I'm not sure if that's the best way to delete a message (3 parameters).
 	// I would really appreciate your feedback on it.
 	if err := api.session.Query(`DELETE FROM message WHERE id=? AND created_at=? AND email=?`, i.Id, i.CreatedAt, i.Email).Exec(); err != nil {
-		log.Printf("failed to delete message: %v", err)
+		log.Printf("failed to delete message: %v",err)
 		return err
 	}
 	return nil
