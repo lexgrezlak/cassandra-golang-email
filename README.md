@@ -1,4 +1,4 @@
-#Setup
+# Setup
 Change smtp values in configs/development.yml if default credentials don't work.
 
 You can also pass them in the docker.env if you run it using `docker-compose up`
