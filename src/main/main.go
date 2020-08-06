@@ -14,9 +14,10 @@ import (
 
 func main() {
 	// Initialize config. We could also set the config path as the environment variable.
-	// Environment variables will overwrite the config.
 	// You have to run the app while being in the project's root folder,
 	// so that the path works correctly.
+	//
+	// Environment variables will overwrite the config.
 	c, err := config.GetConfig("config.yml")
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
@@ -36,8 +37,10 @@ func main() {
 	}
 	defer session.Close()
 
+	// Define the API.
 	api := service.NewAPI(session)
 
+	// Define the router.
 	r := mux.NewRouter()
 
 	// Set up middleware.

@@ -20,8 +20,7 @@ func CreateMessage(datastore service.MessageDatastore) http.HandlerFunc {
 		}
 
 		// Validate the input.
-		validate := validator.New()
-		if err = validate.Struct(i); err != nil {
+		if err = validator.New().Struct(i); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}

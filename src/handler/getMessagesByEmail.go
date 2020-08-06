@@ -47,8 +47,7 @@ func GetMessagesByEmail(datastore service.MessageDatastore) http.HandlerFunc {
 		}
 
 		// Validate the input. The validation rules are specified in the struct definition.
-		validate := validator.New()
-		if err := validate.Struct(i); err != nil {
+		if err := validator.New().Struct(i); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}

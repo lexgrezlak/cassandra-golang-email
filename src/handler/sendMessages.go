@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"gopkg.in/go-playground/validator.v9"
 	"net/http"
 	"request-golang/src/config"
 	"request-golang/src/service"
@@ -8,7 +9,7 @@ import (
 )
 
 type SendMessagesInput struct {
-	MagicNumber int `json:"magic_number"`
+	MagicNumber int `json:"magic_number" validate:"required"`
 }
 
 func SendMessages(datastore service.MessageDatastore, c *config.SmtpConfig) http.HandlerFunc {
@@ -18,6 +19,12 @@ func SendMessages(datastore service.MessageDatastore, c *config.SmtpConfig) http
 		errStatusCode, err := util.Unmarshal(w, r, &i)
 		if err != nil {
 			http.Error(w, err.Error(), errStatusCode)
+			return
+		}
+
+		// Validate the input.
+		if err := validator.New().Struct(i); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
