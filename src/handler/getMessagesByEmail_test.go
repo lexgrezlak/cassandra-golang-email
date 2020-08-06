@@ -16,16 +16,16 @@ func TestGetMessagesByEmail(t *testing.T) {
 	jsonMessages := fmt.Sprintf(
 		`{"messages":[{"id":"%s","email":"test-email","title":"test-title","content":"test-content","magic_number":12313,"createdAt":"%s"}],"endCursor":"hello"}`,
 		gocql.TimeUUID(), "2019-02-02T15:04:05Z")
-	var getMessagesByEmailResult struct{
-		Messages []*service.Message `json:"messages"`
-		EndCursor string `json:"endCursor"`
+	var getMessagesByEmailResult struct {
+		Messages  []*service.Message `json:"messages"`
+		EndCursor string             `json:"endCursor"`
 	}
 	err := json.Unmarshal([]byte(jsonMessages), &getMessagesByEmailResult)
 	if err != nil {
 		t.Fatalf("failed to unmarshal messages: %v", err)
 	}
 
-	testCases := []struct{
+	testCases := []struct {
 		name               string
 		getMessagesByEmail func(i service.GetMessagesByEmailInput) ([]*service.Message, string)
 		wantCode           int
@@ -55,7 +55,7 @@ func TestGetMessagesByEmail(t *testing.T) {
 				api.MockGetMessagesByEmail = tc.getMessagesByEmail
 			}
 			res := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", "/api/messages/" + email, nil)
+			req := httptest.NewRequest("GET", "/api/messages/"+email, nil)
 			// We have to set url vars for unit testing, otherwise gorilla mux won't register
 			// our vars, so the email would be an empty string.
 			vars := map[string]string{

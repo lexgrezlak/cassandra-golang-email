@@ -18,14 +18,14 @@ func TestCreateMessage(t *testing.T) {
 	testCases := []struct {
 		name          string
 		wantCode      int
-		input 		  string
+		input         string
 		createMessage func(i service.CreateMessageInput) error
 	}{
-		{"valid input", http.StatusCreated, validInput,nil},
-		{"valid input, api returns an error", http.StatusInternalServerError,validInput, func(i service.CreateMessageInput) error {
+		{"valid input", http.StatusCreated, validInput, nil},
+		{"valid input, api returns an error", http.StatusInternalServerError, validInput, func(i service.CreateMessageInput) error {
 			return errors.New("failed to create message")
 		}},
-		{"invalid input", http.StatusBadRequest, invalidInput,nil},
+		{"invalid input", http.StatusBadRequest, invalidInput, nil},
 	}
 
 	for _, tc := range testCases {

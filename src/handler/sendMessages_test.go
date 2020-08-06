@@ -15,7 +15,7 @@ func TestSendMessages(t *testing.T) {
 	invalidInput := `{"magic_number": "hello"}`
 	invalidEmptyInput := ``
 	testCases := []struct {
-		name         string
+		name string
 		// Input is a json string.
 		input        string
 		want         int
@@ -34,19 +34,18 @@ func TestSendMessages(t *testing.T) {
 			func(magicNumber int, c *config.SmtpConfig) error {
 				return fmt.Errorf("failed to send messages")
 			}},
-			{
+		{
 			"invalid non-empty input",
 			invalidInput,
 			http.StatusBadRequest,
 			nil,
-			},
-			{
+		},
+		{
 			"invalid empty input",
 			invalidEmptyInput,
 			http.StatusBadRequest,
 			nil,
-			},
-
+		},
 	}
 
 	for _, tc := range testCases {

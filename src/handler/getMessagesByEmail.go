@@ -39,9 +39,9 @@ func GetMessagesByEmail(datastore service.MessageDatastore) http.HandlerFunc {
 
 		// Define the input data for the service.
 		i := service.GetMessagesByEmailInput{
-			Email:  email,
+			Email: email,
 			Params: service.FetchParams{
-				Limit: limit,
+				Limit:  limit,
 				Cursor: cursor,
 			},
 		}
