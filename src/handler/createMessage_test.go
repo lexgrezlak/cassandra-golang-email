@@ -3,7 +3,7 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"github.com/google/go-cmp/cmp"
 	"log"
 	"net/http"
@@ -15,12 +15,12 @@ import (
 func TestCreateMessage(t *testing.T) {
 	testCases := []struct {
 		name          string
-		want          int
-		createMessage func(i service.Message) error
+		wantCode      int
+		createMessage func(i service.CreateMessageInput) error
 	}{
 		{"valid input", http.StatusCreated, nil},
-		{"valid input, api returns an error", http.StatusInternalServerError, func(i service.Message) error {
-			return fmt.Errorf("failed to create message")
+		{"valid input, api returns an error", http.StatusInternalServerError, func(i service.CreateMessageInput) error {
+			return errors.New("failed to create message")
 		}},
 	}
 
@@ -32,7 +32,7 @@ func TestCreateMessage(t *testing.T) {
 			}
 			res := httptest.NewRecorder()
 
-			i := service.Message{
+			i := service.CreateMessageInput{
 				Email:       "hello@world.com",
 				Title:       "Hello World",
 				Content:     "Content 111.",
@@ -47,7 +47,7 @@ func TestCreateMessage(t *testing.T) {
 			h(res, req)
 
 			got := res.Code
-			if diff := cmp.Diff(tc.want, got); diff != "" {
+			if diff := cmp.Diff(tc.wantCode, got); diff != "" {
 				t.Errorf("mismatch (-wantCode, +got): \n%s", diff)
 			}
 		})

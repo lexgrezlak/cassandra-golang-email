@@ -1,30 +1,33 @@
 package handler
 
-import "request-golang/src/service"
+import (
+	"request-golang/src/config"
+	"request-golang/src/service"
+)
 
 type mockApi struct {
-	MockCreateMessage      func(i service.Message) error
-	MockSendMessages       func(magicNumber int) error
-	MockGetMessagesByEmail func(email string, limit int, cursor string) ([]*service.Message, string, error)
+	MockCreateMessage      func(i service.CreateMessageInput) error
+	MockSendMessages       func(magicNumber int, c *config.SmtpConfig) error
+	MockGetMessagesByEmail func(i service.GetMessagesByEmailInput) ([]*service.Message, string)
 }
 
-func (api *mockApi) CreateMessage(i service.Message) error {
+func (api *mockApi) CreateMessage(i service.CreateMessageInput) error {
 	if api.MockCreateMessage != nil {
 		return api.MockCreateMessage(i)
 	}
 	return nil
 }
 
-func (api *mockApi) GetMessagesByEmail(email string, limit int, cursor string) ([]*service.Message, string, error) {
+func (api *mockApi) GetMessagesByEmail(i service.GetMessagesByEmailInput) ([]*service.Message, string) {
 	if api.MockGetMessagesByEmail != nil {
-		return api.MockGetMessagesByEmail(email, limit, cursor)
+		return api.MockGetMessagesByEmail(i)
 	}
-	return nil, "", nil
+	return nil, "test-cursor"
 }
 
-func (api *mockApi) SendMessages(magicNumber int) error {
+func (api *mockApi) SendMessages(magicNumber int, c *config.SmtpConfig) error {
 	if api.MockSendMessages != nil {
-		return api.MockSendMessages(magicNumber)
+		return api.MockSendMessages(magicNumber, c)
 	}
 	return nil
 }
