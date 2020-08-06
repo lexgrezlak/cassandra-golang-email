@@ -3,6 +3,7 @@ Change smtp values in configs/development.yml if default credentials don't work.
 
 You can also pass them in the docker.env if you run it using `docker-compose up`
 
+To run the app through Docker, you just need `docker-entrypoint-initdb.d` folder, `docker.env`, and `docker-compose.yml`
 # Features
 ```
 curl -X POST localhost:8080/api/message -d '{"email":"john@gmail.com","title":"Hello World","content":"simple text","magic_number":101}'
