@@ -1,11 +1,11 @@
 package service
 
 import (
-	"fmt"
 	"github.com/gocql/gocql"
 	"log"
 	"net/smtp"
 	"request-golang/src/config"
+	"strings"
 	"time"
 )
 
@@ -17,6 +17,12 @@ const (
 	MAGIC_NUMBER = "magic_number"
 	CREATED_AT   = "created_at"
 )
+
+type deleteMessageInput struct {
+	Id gocql.UUID
+	CreatedAt time.Time
+	Email string
+}
 
 type sendEmailInput struct {
 	Email   string
@@ -51,6 +57,8 @@ type Message struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
+// Gets the messages from the database and returns them along with an end cursor
+// for pagination purposes.
 func (api *api) GetMessagesByEmail(i GetMessagesByEmailInput) ([]*Message, string) {
 	var messages []*Message
 	var state []byte
@@ -88,20 +96,27 @@ func (api *api) GetMessagesByEmail(i GetMessagesByEmailInput) ([]*Message, strin
 	return messages, endCursor
 }
 
+// Gets the messages from the database, then sends an email,
+// and on success deletes it from the database,
+// one by one.
 func (api *api) SendMessages(magicNumber int, c *config.SmtpConfig) error {
-	// Pull the ids of messages with the specified magicNumber
+	// Pull the messages with the specified magicNumber
 	// to delete them later.
 	iter := api.session.Query(
-		`SELECT id, title, content, email FROM message WHERE magic_number=?`, magicNumber).Iter()
+		`SELECT id, created_at, title, content, email FROM message WHERE magic_number=?`, magicNumber).Iter()
 
-	ids := make([]*gocql.UUID, 0)
+	deleteMessageInputs := make([]*deleteMessageInput, 0)
 	sendEmailInputs := make([]*sendEmailInput, 0)
 	m := map[string]interface{}{}
 
 	for iter.MapScan(m) {
-		// Get the ids for delete query
-		id := m[ID].(gocql.UUID)
-		ids = append(ids, &id)
+		// Get the input for delete query
+		deleteInput := deleteMessageInput{
+			Id:        m[ID].(gocql.UUID),
+			CreatedAt: m[CREATED_AT].(time.Time),
+			Email: m[EMAIL].(string),
+		}
+		deleteMessageInputs = append(deleteMessageInputs, &deleteInput)
 
 		// Get the inputs for sending emails
 		input := sendEmailInput{
@@ -110,8 +125,6 @@ func (api *api) SendMessages(magicNumber int, c *config.SmtpConfig) error {
 			Content: m[CONTENT].(string),
 		}
 		sendEmailInputs = append(sendEmailInputs, &input)
-		fmt.Printf("INPUT %v INPUT", sendEmailInputs)
-
 		m = map[string]interface{}{}
 	}
 
@@ -123,7 +136,7 @@ func (api *api) SendMessages(magicNumber int, c *config.SmtpConfig) error {
 			return err
 		} else {
 			// If the email has been successfully sent, delete the message
-			err := api.deleteMessage(ids[index])
+			err := api.deleteMessage(deleteMessageInputs[index])
 			if err != nil {
 				log.Printf("failed to delete messages: %v", err)
 				return err
@@ -146,20 +159,26 @@ func (api *api) CreateMessage(i CreateMessageInput) error {
 	return nil
 }
 
+
 // Deletes one message from the database with given id.
-func (api *api) deleteMessage(id *gocql.UUID) error {
-	if err := api.session.Query(`DELETE FROM message WHERE id=?`, id).Exec(); err != nil {
+func (api *api) deleteMessage(i *deleteMessageInput) error {
+	// I'm not sure if that's the best way to delete a message (3 parameters).
+	// I would really appreciate your feedback on it.
+	if err := api.session.Query(`DELETE FROM message WHERE id=? AND created_at=? AND email=?`, i.Id, i.CreatedAt, i.Email).Exec(); err != nil {
 		log.Printf("failed to delete message: %v",err)
 		return err
 	}
 	return nil
 }
 
+//
 func sendEmail(i *sendEmailInput, c *config.SmtpConfig) error {
 	// I'm not sure if I should keep the auth here or keep it higher up
 	// in the code (efficiency?, to not have to make a connection every time?).
 	// I'd appreciate if you could comment on that.
-	auth := smtp.PlainAuth("", c.From, c.Password, "smtp.gmail.com")
+	hostAndPort := strings.Split(c.Address, ":")
+	host := hostAndPort[0]
+	auth := smtp.PlainAuth("", c.From, c.Password, host)
 
 	// Email data.
 	to := []string{i.Email}
@@ -168,6 +187,7 @@ func sendEmail(i *sendEmailInput, c *config.SmtpConfig) error {
 		"\r\n" +
 		i.Content + "\r\n")
 
+	// Send the mail.
 	err := smtp.SendMail(c.Address, auth, c.From, to, msg)
 	if err != nil {
 		log.Printf("failed to send mail: %v", err)
